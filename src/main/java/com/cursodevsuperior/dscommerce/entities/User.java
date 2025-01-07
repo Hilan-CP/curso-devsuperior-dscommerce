@@ -107,10 +107,14 @@ public class User implements UserDetails{
 		this.password = password;
 	}
 	
+	public void addRole(Role role) {
+		roles.add(role);
+	}
+	
 	public List<Order> getOrders() {
 		return orders;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return Objects.hash(id);
