@@ -61,8 +61,7 @@ public class UserService implements UserDetailsService{
 	@Transactional
 	public UserDTO update(Long id, UserDTO dto) {
 		//pendências de implementação
-		//permitir que somente administadores possam atribuir permissões
-		//permitir que um usuário comum altere apenas seu proprio cadastro
+		//permitir que um usuário altere apenas seu proprio cadastro
 		//criptografar senha
 		User entity = repository.getReferenceById(id);
 		copyDataAndSave(dto, entity);
