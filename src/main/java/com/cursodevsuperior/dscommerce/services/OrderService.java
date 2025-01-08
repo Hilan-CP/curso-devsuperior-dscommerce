@@ -36,12 +36,22 @@ public class OrderService {
 	
 	@Transactional(readOnly = true)
 	public Page<OrderDTO> findByDate(String minDate, String maxDate, Pageable pageable) {
-		if(minDate.equals("") || maxDate.equals("")) {
-			throw new IllegalArgumentException("É necessário informar uma data inicial e uma data final");
+		Instant endDate;
+		Instant beginDate;
+		if(maxDate.equals("")) {
+			endDate = LocalDate.now().atTime(23, 59, 59).toInstant(ZoneOffset.UTC);
 		}
-		Instant endDate = LocalDate.parse(maxDate).atStartOfDay().toInstant(ZoneOffset.UTC);
-		Instant beginDate = LocalDate.parse(minDate).atStartOfDay().toInstant(ZoneOffset.UTC);
-		return null;
+		else {
+			endDate = LocalDate.parse(maxDate).atTime(23, 59, 59).toInstant(ZoneOffset.UTC);
+		}
+		if(minDate.equals("")) {
+			beginDate = LocalDate.ofInstant(endDate, ZoneOffset.UTC).atStartOfDay().toInstant(ZoneOffset.UTC);
+		}
+		else {
+			beginDate = LocalDate.parse(minDate).atStartOfDay().toInstant(ZoneOffset.UTC);
+		}
+		Page<Order> result = orderRepository.searchOrderByDate(beginDate, endDate, pageable);
+		return result.map(o -> new OrderDTO(o));
 	}
 
 	@Transactional(readOnly = true)
