@@ -1,5 +1,7 @@
 package com.cursodevsuperior.dscommerce.repositories;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long>{
 	
 	@Query("SELECT u FROM User u WHERE UPPER(u.name) LIKE UPPER(CONCAT('%', :name,'%'))")
 	Page<User> searchAllByName(String name, Pageable pageable);
+
+	Optional<User> findByEmail(String username);
 }

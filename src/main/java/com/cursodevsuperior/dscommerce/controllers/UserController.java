@@ -28,6 +28,12 @@ public class UserController {
 	@Autowired
 	private UserService service;
 
+	@GetMapping(value = "/me")
+	private ResponseEntity<UserDTO> getMe(){
+		UserDTO user = service.getMe();
+		return ResponseEntity.ok(user);
+	}
+	
 	@GetMapping
 	public ResponseEntity<Page<UserMinDTO>> findAllByName(@RequestParam(defaultValue = "") String name, Pageable pageable){
 		Page<UserMinDTO> page = service.findAllByName(name, pageable);
