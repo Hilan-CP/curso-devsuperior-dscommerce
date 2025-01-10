@@ -8,26 +8,23 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cursodevsuperior.dscommerce.dto.RoleDTO;
 import com.cursodevsuperior.dscommerce.dto.UserDTO;
-import com.cursodevsuperior.dscommerce.dto.UserMinDTO;
 import com.cursodevsuperior.dscommerce.entities.Role;
 import com.cursodevsuperior.dscommerce.entities.User;
-import com.cursodevsuperior.dscommerce.repositories.RoleRepository;
 import com.cursodevsuperior.dscommerce.repositories.UserRepository;
+import com.cursodevsuperior.dscommerce.services.exceptions.ForbiddenAccessException;
 
 @Service
 public class UserService implements UserDetailsService{
 	
 	@Autowired
 	private UserRepository repository;
-	
-	@Autowired
-	private RoleRepository roleRepository;
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -53,9 +50,9 @@ public class UserService implements UserDetailsService{
 	}
 
 	@Transactional(readOnly = true)
-	public Page<UserMinDTO> findAllByName(String name, Pageable pageable) {
+	public Page<UserDTO> findAllByName(String name, Pageable pageable) {
 		Page<User> result = repository.searchAllByName(name, pageable);
-		return result.map(u -> new UserMinDTO(u));
+		return result.map(u -> new UserDTO(u));
 	}
 
 	@Transactional(readOnly = true)
@@ -66,20 +63,21 @@ public class UserService implements UserDetailsService{
 
 	@Transactional
 	public UserDTO insert(UserDTO dto) {
-		//pendências de implementação
-		//permitir que somente administadores possam atribuir permissões
 		//qualquer usuário pode se cadastrar, porem terão permissão de cliente
-		//criptografar senha
 		User entity = new User();
+		entity.addRole(new Role(1L, "ROLE_CLIENT"));
 		copyDataAndSave(dto, entity);
 		return new UserDTO(entity);
 	}
 
 	@Transactional
 	public UserDTO update(Long id, UserDTO dto) {
-		//pendências de implementação
 		//permitir que um usuário altere apenas seu proprio cadastro
-		//criptografar senha
+		//um usuário não pode alterar seu role
+		User current = getAuthenticatedUser();
+		if(!current.getId().equals(id)) {
+			throw new ForbiddenAccessException("Usuário atual não possui permissão para acessar este recurso");
+		}
 		User entity = repository.getReferenceById(id);
 		copyDataAndSave(dto, entity);
 		return new UserDTO(entity);
@@ -100,11 +98,9 @@ public class UserService implements UserDetailsService{
 		entity.setEmail(dto.getEmail());
 		entity.setPhone(dto.getPhone());
 		entity.setBirthDate(dto.getBirthDate());
-		entity.setPassword(dto.getPassword());
-		for(RoleDTO r : dto.getRoles()) {
-			//Role possui equals e hashCode comparado por authority, portanto authority não pode ser nulo
-			Role role = roleRepository.getReferenceById(r.getId());
-			entity.addRole(role);
+		if(dto.getPassword() != null) {
+			PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+			entity.setPassword(passwordEncoder.encode(dto.getPassword()));
 		}
 	}
 

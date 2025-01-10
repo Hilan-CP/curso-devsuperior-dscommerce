@@ -28,7 +28,7 @@ public class UserDTO {
 		email = entity.getEmail();
 		phone = entity.getPhone();
 		birthDate = entity.getBirthDate();
-		//não copiar senha
+		//não copiar senha - não enviar senha ao controller
 		for(GrantedAuthority authority : entity.getAuthorities()) {
 			Role role = (Role) authority;
 			roles.add(new RoleDTO(role));
