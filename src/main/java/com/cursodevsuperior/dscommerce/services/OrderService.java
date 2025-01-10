@@ -34,6 +34,12 @@ public class OrderService {
 	@Autowired
 	private OrderItemRepository itemRepository;
 	
+	@Autowired
+	private UserService userService;
+	
+	@Autowired
+	private AuthService authService;
+	
 	@Transactional(readOnly = true)
 	public Page<OrderDTO> findByDate(String minDate, String maxDate, Pageable pageable) {
 		Instant endDate;
@@ -57,6 +63,7 @@ public class OrderService {
 	@Transactional(readOnly = true)
 	public OrderDTO findById(Long id) {
 		Order result = orderRepository.findById(id).get();
+		authService.validateSelfOrAdmin(result.getClient().getId());
 		return new OrderDTO(result);
 	}
 
@@ -65,9 +72,7 @@ public class OrderService {
 		Order entity = new Order();
 		entity.setStatus(OrderStatus.WAITING_PAYMENT);
 		entity.setMoment(Instant.now());
-		//implementar login e usar usuário logado
-		User client = new User();
-		client.setId(1L);
+		User client = userService.getAuthenticatedUser();
 		entity.setClient(client);
 		for(OrderItemDTO i : dto.getItems()) {
 			Product product = productRepository.getReferenceById(i.getProductId());

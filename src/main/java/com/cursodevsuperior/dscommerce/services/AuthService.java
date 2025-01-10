@@ -14,14 +14,7 @@ public class AuthService {
 	
 	public void validateSelfOrAdmin(Long userId) {
 		User user = userService.getAuthenticatedUser();
-		if(!user.hasRole("ROLE_ADMIN") || !user.getId().equals(userId)) {
-			throw new ForbiddenAccessException("Usuário atual não possui permissão para acessar este recurso");
-		}
-	}
-	
-	public void validateSelf(Long userId) {
-		User user = userService.getAuthenticatedUser();
-		if(!user.getId().equals(userId)) {
+		if(!user.hasRole("ROLE_ADMIN") && !user.getId().equals(userId)) {
 			throw new ForbiddenAccessException("Usuário atual não possui permissão para acessar este recurso");
 		}
 	}
