@@ -1,6 +1,7 @@
 package com.cursodevsuperior.dscommerce.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -12,13 +13,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cursodevsuperior.dscommerce.dto.UserDTO;
 import com.cursodevsuperior.dscommerce.entities.Role;
 import com.cursodevsuperior.dscommerce.entities.User;
 import com.cursodevsuperior.dscommerce.repositories.UserRepository;
+import com.cursodevsuperior.dscommerce.services.exceptions.DatabaseException;
 import com.cursodevsuperior.dscommerce.services.exceptions.ForbiddenAccessException;
+import com.cursodevsuperior.dscommerce.services.exceptions.ResourceNotFoundException;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class UserService implements UserDetailsService{
@@ -30,7 +36,7 @@ public class UserService implements UserDetailsService{
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		User user = repository.searchByEmail(username);
 		if(user == null) {
-			throw new UsernameNotFoundException("Usuário não encontrado: " + username);
+			throw new UsernameNotFoundException("Usuário não encontrado");
 		}
 		return user;
 	}
@@ -57,7 +63,8 @@ public class UserService implements UserDetailsService{
 
 	@Transactional(readOnly = true)
 	public UserDTO findById(Long id) {
-		User result = repository.findById(id).get();
+		User result = repository.findById(id)
+					.orElseThrow(() -> new ResourceNotFoundException("Recurso não encontrado"));
 		return new UserDTO(result);
 	}
 
@@ -75,14 +82,27 @@ public class UserService implements UserDetailsService{
 		//permitir que um usuário altere apenas seu proprio cadastro
 		//um usuário não pode alterar seu role
 		validateSelf(id);
-		User entity = repository.getReferenceById(id);
-		copyDataAndSave(dto, entity);
-		return new UserDTO(entity);
+		try {
+			User entity = repository.getReferenceById(id);
+			copyDataAndSave(dto, entity);
+			return new UserDTO(entity);
+		}
+		catch(EntityNotFoundException e) {
+			throw new ResourceNotFoundException("Recurso não encontrado");
+		}
 	}
 
-	@Transactional
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public void delete(Long id) {
-		repository.deleteById(id);
+		if(!repository.existsById(id)) {
+			throw new ResourceNotFoundException("Recurso não encontrado");
+		}
+		try{
+			repository.deleteById(id);
+		}
+		catch(DataIntegrityViolationException e) {
+			throw new DatabaseException("Violação de integridade relacional");
+		}
 	}
 	
 	private void validateSelf(Long userId) {

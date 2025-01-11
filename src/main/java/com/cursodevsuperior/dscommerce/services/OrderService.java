@@ -21,6 +21,9 @@ import com.cursodevsuperior.dscommerce.entities.User;
 import com.cursodevsuperior.dscommerce.repositories.OrderItemRepository;
 import com.cursodevsuperior.dscommerce.repositories.OrderRepository;
 import com.cursodevsuperior.dscommerce.repositories.ProductRepository;
+import com.cursodevsuperior.dscommerce.services.exceptions.ResourceNotFoundException;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class OrderService {
@@ -62,7 +65,8 @@ public class OrderService {
 
 	@Transactional(readOnly = true)
 	public OrderDTO findById(Long id) {
-		Order result = orderRepository.findById(id).get();
+		Order result = orderRepository.findById(id)
+					.orElseThrow(() -> new ResourceNotFoundException("Recurso não encontrado"));
 		authService.validateSelfOrAdmin(result.getClient().getId());
 		return new OrderDTO(result);
 	}
@@ -86,13 +90,18 @@ public class OrderService {
 
 	@Transactional
 	public OrderDTO updatePayment(Long id) {
-		Order entity = orderRepository.getReferenceById(id);
-		Payment payment = new Payment();
-		payment.setMoment(Instant.now());
-		payment.setOrder(entity);
-		entity.setPayment(payment);
-		entity.setStatus(OrderStatus.PAID);
-		entity = orderRepository.save(entity);
-		return new OrderDTO(entity);
+		try {
+			Order entity = orderRepository.getReferenceById(id);
+			Payment payment = new Payment();
+			payment.setMoment(Instant.now());
+			payment.setOrder(entity);
+			entity.setPayment(payment);
+			entity.setStatus(OrderStatus.PAID);
+			entity = orderRepository.save(entity);
+			return new OrderDTO(entity);
+		}
+		catch(EntityNotFoundException e) {
+			throw new ResourceNotFoundException("Recurso não encontrado");
+		}
 	}
 }
