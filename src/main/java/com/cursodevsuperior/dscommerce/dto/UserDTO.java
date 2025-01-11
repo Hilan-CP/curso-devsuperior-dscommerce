@@ -8,15 +8,32 @@ import org.springframework.security.core.GrantedAuthority;
 
 import com.cursodevsuperior.dscommerce.entities.Role;
 import com.cursodevsuperior.dscommerce.entities.User;
+import com.cursodevsuperior.dscommerce.validation.SignUp;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 
 public class UserDTO {
 
 	private Long id;
+	
+	@NotBlank(message = "campo obrigatório")
 	private String name;
+	
+	@NotBlank(message = "campo obrigatório")
 	private String email;
+	
+	@NotBlank(message = "campo obrigatório")
 	private String phone;
+	
+	@NotNull(message = "campo obrigatório")
+	@Past(message = "data precisa ser passada")
 	private LocalDate birthDate;
+	
+	@NotBlank(message = "campo obrigatório", groups = SignUp.class)
 	private String password;
+	
 	private List<RoleDTO> roles = new ArrayList<>();
 	
 	public UserDTO() {

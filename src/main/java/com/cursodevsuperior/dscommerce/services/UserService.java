@@ -74,10 +74,7 @@ public class UserService implements UserDetailsService{
 	public UserDTO update(Long id, UserDTO dto) {
 		//permitir que um usuário altere apenas seu proprio cadastro
 		//um usuário não pode alterar seu role
-		User current = getAuthenticatedUser();
-		if(!current.getId().equals(id)) {
-			throw new ForbiddenAccessException("Usuário atual não possui permissão para acessar este recurso");
-		}
+		validateSelf(id);
 		User entity = repository.getReferenceById(id);
 		copyDataAndSave(dto, entity);
 		return new UserDTO(entity);
@@ -86,6 +83,13 @@ public class UserService implements UserDetailsService{
 	@Transactional
 	public void delete(Long id) {
 		repository.deleteById(id);
+	}
+	
+	private void validateSelf(Long userId) {
+		User current = getAuthenticatedUser();
+		if(!current.getId().equals(userId)) {
+			throw new ForbiddenAccessException("Usuário atual não possui permissão para acessar este recurso");
+		}
 	}
 
 	private void copyDataAndSave(UserDTO dto, User entity) {
@@ -98,11 +102,11 @@ public class UserService implements UserDetailsService{
 		entity.setEmail(dto.getEmail());
 		entity.setPhone(dto.getPhone());
 		entity.setBirthDate(dto.getBirthDate());
+		
+		//senha pode ser nula ao atualizar cadastro
 		if(dto.getPassword() != null) {
 			PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 			entity.setPassword(passwordEncoder.encode(dto.getPassword()));
 		}
 	}
-
-	
 }

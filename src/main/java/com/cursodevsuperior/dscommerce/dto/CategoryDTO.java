@@ -2,9 +2,13 @@ package com.cursodevsuperior.dscommerce.dto;
 
 import com.cursodevsuperior.dscommerce.entities.Category;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class CategoryDTO {
 
 	private Long id;
+	
+	@NotBlank(message = "campo obrigatório")
 	private String name;
 	
 	public CategoryDTO() {

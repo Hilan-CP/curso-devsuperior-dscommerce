@@ -20,6 +20,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.cursodevsuperior.dscommerce.dto.OrderDTO;
 import com.cursodevsuperior.dscommerce.services.OrderService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
@@ -46,7 +48,7 @@ public class OrderController {
 	
 	@PreAuthorize("hasRole('ROLE_CLIENT')")
 	@PostMapping
-	public ResponseEntity<OrderDTO> insert(@RequestBody OrderDTO dto){
+	public ResponseEntity<OrderDTO> insert(@Valid @RequestBody OrderDTO dto){
 		dto = service.insert(dto);
 		URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").build(dto.getId());
 		return ResponseEntity.created(uri).body(dto);

@@ -22,6 +22,8 @@ import com.cursodevsuperior.dscommerce.dto.ProductDTO;
 import com.cursodevsuperior.dscommerce.dto.ProductMinDTO;
 import com.cursodevsuperior.dscommerce.services.ProductService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/products")
 public class ProductController {
@@ -43,7 +45,7 @@ public class ProductController {
 	
 	@PreAuthorize("hasRole('ROLE_ADMIN')")
 	@PostMapping
-	public ResponseEntity<ProductDTO> insert(@RequestBody ProductDTO dto){
+	public ResponseEntity<ProductDTO> insert(@Valid @RequestBody ProductDTO dto){
 		dto = service.insert(dto);
 		URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").build(dto.getId());
 		return ResponseEntity.created(uri).body(dto);
@@ -51,7 +53,7 @@ public class ProductController {
 	
 	@PreAuthorize("hasRole('ROLE_ADMIN')")
 	@PutMapping(value = "/{id}")
-	public ResponseEntity<ProductDTO> update(@PathVariable Long id, @RequestBody ProductDTO dto){
+	public ResponseEntity<ProductDTO> update(@PathVariable Long id, @Valid @RequestBody ProductDTO dto){
 		dto = service.update(id, dto);
 		return ResponseEntity.ok(dto);
 	}
