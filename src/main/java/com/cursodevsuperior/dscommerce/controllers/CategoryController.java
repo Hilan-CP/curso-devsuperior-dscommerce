@@ -32,14 +32,12 @@ public class CategoryController {
 	@Autowired
 	private CategoryService service;
 	
-	@PreAuthorize("hasRole('ROLE_ADMIN')")
 	@GetMapping
 	public ResponseEntity<Page<CategoryDTO>> findAllByName(@RequestParam(defaultValue = "") String name, Pageable pageable){
 		Page<CategoryDTO> page = service.findAllByName(name, pageable);
 		return ResponseEntity.ok(page);
 	}
 
-	@PreAuthorize("hasRole('ROLE_ADMIN')")
 	@GetMapping(value = "/{id}")
 	public ResponseEntity<CategoryDTO> findById(@PathVariable Long id){
 		CategoryDTO dto = service.findById(id);

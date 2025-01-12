@@ -68,16 +68,21 @@ public class UserService implements UserDetailsService{
 		return new UserDTO(result);
 	}
 
-	@Transactional
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public UserDTO insert(UserDTO dto) {
 		//qualquer usuário pode se cadastrar, porem terão permissão de cliente
-		User entity = new User();
-		entity.addRole(new Role(1L, "ROLE_CLIENT"));
-		copyDataAndSave(dto, entity);
-		return new UserDTO(entity);
+		try {
+			User entity = new User();
+			entity.addRole(new Role(1L, "ROLE_CLIENT"));
+			copyDataAndSave(dto, entity);
+			return new UserDTO(entity);
+		}
+		catch(DataIntegrityViolationException e) {
+			throw new DatabaseException("Violação de integridade de campo único");
+		}
 	}
 
-	@Transactional
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public UserDTO update(Long id, UserDTO dto) {
 		//permitir que um usuário altere apenas seu proprio cadastro
 		//um usuário não pode alterar seu role
@@ -89,6 +94,9 @@ public class UserService implements UserDetailsService{
 		}
 		catch(EntityNotFoundException e) {
 			throw new ResourceNotFoundException("Recurso não encontrado");
+		}
+		catch(DataIntegrityViolationException e) {
+			throw new DatabaseException("Violação de integridade de campo único");
 		}
 	}
 
